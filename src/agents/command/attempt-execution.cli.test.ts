@@ -3,6 +3,7 @@ import os from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { SessionEntry } from "../../config/sessions.js";
+import { createSqliteSessionTranscriptLocator } from "../../config/sessions/paths.js";
 import { listSessionEntries, upsertSessionEntry } from "../../config/sessions/store.js";
 import { appendSessionTranscriptMessage } from "../../config/sessions/transcript-append.js";
 import { loadSqliteSessionTranscriptEvents } from "../../config/sessions/transcript-store.sqlite.js";
@@ -62,6 +63,10 @@ function makeCliResult(text: string): EmbeddedPiRunResult {
       },
     },
   };
+}
+
+function sessionTranscriptLocator(sessionId: string): string {
+  return createSqliteSessionTranscriptLocator({ agentId: "main", sessionId });
 }
 
 async function readSessionMessages(sessionFile: string) {
@@ -139,7 +144,7 @@ describe("CLI attempt execution", () => {
       sessionId: params.sessionEntry.sessionId,
       sessionKey: params.sessionKey,
       sessionAgentId: "main",
-      sessionFile: path.join(tmpDir, "session.jsonl"),
+      sessionFile: sessionTranscriptLocator(params.sessionEntry.sessionId),
       workspaceDir: tmpDir,
       body: params.body,
       isFallbackRetry: false,
@@ -203,7 +208,7 @@ describe("CLI attempt execution", () => {
       sessionId: sessionEntry.sessionId,
       sessionKey,
       sessionAgentId: "main",
-      sessionFile: path.join(tmpDir, "session.jsonl"),
+      sessionFile: sessionTranscriptLocator(sessionEntry.sessionId),
       workspaceDir: tmpDir,
       body: "retry this",
       isFallbackRetry: false,
@@ -348,7 +353,7 @@ describe("CLI attempt execution", () => {
       sessionId: sessionEntry.sessionId,
       sessionKey,
       sessionAgentId: "main",
-      sessionFile: path.join(tmpDir, "session.jsonl"),
+      sessionFile: sessionTranscriptLocator(sessionEntry.sessionId),
       workspaceDir: tmpDir,
       body: "continue",
       isFallbackRetry: false,
@@ -596,7 +601,7 @@ describe("CLI attempt execution", () => {
       sessionId: sessionEntry.sessionId,
       sessionKey,
       sessionAgentId: "main",
-      sessionFile: path.join(tmpDir, "session.jsonl"),
+      sessionFile: sessionTranscriptLocator(sessionEntry.sessionId),
       workspaceDir: tmpDir,
       body: "route this",
       isFallbackRetry: false,
@@ -654,7 +659,7 @@ describe("CLI attempt execution", () => {
       sessionId: sessionEntry.sessionId,
       sessionKey,
       sessionAgentId: "main",
-      sessionFile: path.join(tmpDir, "session.jsonl"),
+      sessionFile: sessionTranscriptLocator(sessionEntry.sessionId),
       workspaceDir: tmpDir,
       body: "route this",
       isFallbackRetry: false,
@@ -708,7 +713,7 @@ describe("CLI attempt execution", () => {
       sessionId: sessionEntry.sessionId,
       sessionKey,
       sessionAgentId: "main",
-      sessionFile: path.join(tmpDir, "session.jsonl"),
+      sessionFile: sessionTranscriptLocator(sessionEntry.sessionId),
       workspaceDir: tmpDir,
       body: "route this",
       isFallbackRetry: false,
@@ -764,7 +769,7 @@ describe("CLI attempt execution", () => {
       sessionId: sessionEntry.sessionId,
       sessionKey,
       sessionAgentId: "main",
-      sessionFile: path.join(tmpDir, "session.jsonl"),
+      sessionFile: sessionTranscriptLocator(sessionEntry.sessionId),
       workspaceDir: tmpDir,
       body: "raw prompt",
       isFallbackRetry: false,
@@ -832,7 +837,7 @@ describe("CLI attempt execution", () => {
       sessionId: sessionEntry.sessionId,
       sessionKey,
       sessionAgentId: "main",
-      sessionFile: path.join(tmpDir, "session.jsonl"),
+      sessionFile: sessionTranscriptLocator(sessionEntry.sessionId),
       workspaceDir: tmpDir,
       body: "cleanup",
       isFallbackRetry: false,
@@ -897,7 +902,7 @@ describe("embedded attempt harness pinning", () => {
       sessionId: sessionEntry.sessionId,
       sessionKey: "agent:main:main",
       sessionAgentId: "main",
-      sessionFile: path.join(tmpDir, "session.jsonl"),
+      sessionFile: sessionTranscriptLocator(sessionEntry.sessionId),
       workspaceDir: tmpDir,
       body: "continue",
       isFallbackRetry: false,
@@ -947,7 +952,7 @@ describe("embedded attempt harness pinning", () => {
       sessionId: sessionEntry.sessionId,
       sessionKey: "agent:main:main",
       sessionAgentId: "main",
-      sessionFile: path.join(tmpDir, "session.jsonl"),
+      sessionFile: sessionTranscriptLocator(sessionEntry.sessionId),
       workspaceDir: tmpDir,
       body: "continue",
       isFallbackRetry: false,
@@ -1006,7 +1011,7 @@ describe("embedded attempt harness pinning", () => {
       sessionId: sessionEntry.sessionId,
       sessionKey: "agent:main:main",
       sessionAgentId: "main",
-      sessionFile: path.join(tmpDir, "session.jsonl"),
+      sessionFile: sessionTranscriptLocator(sessionEntry.sessionId),
       workspaceDir: tmpDir,
       body: "continue",
       isFallbackRetry: false,
@@ -1052,7 +1057,7 @@ describe("embedded attempt harness pinning", () => {
       sessionId: sessionEntry.sessionId,
       sessionKey: "agent:main:main",
       sessionAgentId: "main",
-      sessionFile: path.join(tmpDir, "session.jsonl"),
+      sessionFile: sessionTranscriptLocator(sessionEntry.sessionId),
       workspaceDir: tmpDir,
       body: "start",
       isFallbackRetry: false,
@@ -1097,7 +1102,7 @@ describe("embedded attempt harness pinning", () => {
       sessionId: sessionEntry.sessionId,
       sessionKey: "agent:main:main",
       sessionAgentId: "main",
-      sessionFile: path.join(tmpDir, "session.jsonl"),
+      sessionFile: sessionTranscriptLocator(sessionEntry.sessionId),
       workspaceDir: tmpDir,
       body: "continue",
       isFallbackRetry: false,
@@ -1150,7 +1155,7 @@ describe("embedded attempt harness pinning", () => {
       sessionId: sessionEntry.sessionId,
       sessionKey: "agent:main:main",
       sessionAgentId: "main",
-      sessionFile: path.join(tmpDir, "session.jsonl"),
+      sessionFile: sessionTranscriptLocator(sessionEntry.sessionId),
       workspaceDir: tmpDir,
       body: "continue",
       isFallbackRetry: false,
@@ -1204,7 +1209,7 @@ describe("embedded attempt harness pinning", () => {
       sessionId: sessionEntry.sessionId,
       sessionKey: "agent:main:main",
       sessionAgentId: "main",
-      sessionFile: path.join(tmpDir, "session.jsonl"),
+      sessionFile: sessionTranscriptLocator(sessionEntry.sessionId),
       workspaceDir: tmpDir,
       body: "fallback",
       isFallbackRetry: true,
