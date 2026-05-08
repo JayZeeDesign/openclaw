@@ -155,7 +155,7 @@ vi.mock("../agents/command/attempt-execution.runtime.js", () => {
         onAgentEvent: params.onAgentEvent,
       } as never);
     }),
-    sessionFileHasContent: vi.fn(async () => false),
+    sessionTranscriptHasContent: vi.fn(async () => false),
   };
 });
 
