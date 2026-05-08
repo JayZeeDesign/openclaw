@@ -2,6 +2,7 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { expect, test, vi } from "vitest";
+import { readTranscriptState } from "../agents/transcript/transcript-state.js";
 import { getSessionEntry, upsertSessionEntry } from "../config/sessions.js";
 import { replaceSqliteSessionTranscriptEvents } from "../config/sessions/transcript-store.sqlite.js";
 import { DEFAULT_AGENT_ID } from "../routing/session-key.js";
@@ -44,7 +45,7 @@ test("sessions.compaction.* lists checkpoints and branches or restores from pre-
           summary: "checkpoint summary",
           firstKeptEntryId: fixture.preCompactionLeafId,
           preCompaction: {
-            sessionId: fixture.preCompactionSession.getSessionId(),
+            sessionId: fixture.preCompactionSessionId,
             sessionFile: fixture.preCompactionSessionFile,
             leafId: fixture.preCompactionLeafId,
           },
@@ -147,7 +148,7 @@ test("sessions.compaction.* lists checkpoints and branches or restores from pre-
   expect(branched.payload?.entry.parentSessionKey).toBe("agent:main:main");
   const branchedSessionFile = branched.payload?.entry.sessionFile;
   expect(branchedSessionFile).toBeTruthy();
-  const branchedSession = SessionManager.open(branchedSessionFile!);
+  const branchedSession = await readTranscriptState(branchedSessionFile!);
   expect(branchedSession.getEntries()).toHaveLength(
     fixture.preCompactionSession.getEntries().length,
   );
@@ -193,7 +194,7 @@ test("sessions.compaction.* lists checkpoints and branches or restores from pre-
   expect(restored.payload?.entry.compactionCheckpoints).toHaveLength(1);
   const restoredSessionFile = restored.payload?.entry.sessionFile;
   expect(restoredSessionFile).toBeTruthy();
-  const restoredSession = SessionManager.open(restoredSessionFile!);
+  const restoredSession = await readTranscriptState(restoredSessionFile!);
   expect(restoredSession.getEntries()).toHaveLength(
     fixture.preCompactionSession.getEntries().length,
   );
