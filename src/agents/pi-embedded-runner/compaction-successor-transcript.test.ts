@@ -2,9 +2,11 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { closeOpenClawAgentDatabasesForTest } from "../../state/openclaw-agent-db.js";
 import { closeOpenClawStateDatabaseForTest } from "../../state/openclaw-state-db.js";
 import { makeAgentAssistantMessage } from "../test-helpers/agent-message-fixtures.js";
 import { SessionManager } from "../transcript/session-transcript-contract.js";
+import { readTranscriptState } from "../transcript/transcript-state.js";
 import {
   rotateTranscriptAfterCompaction,
   rotateTranscriptFileAfterCompaction,
@@ -21,6 +23,7 @@ async function createTmpDir(): Promise<string> {
 }
 
 afterEach(async () => {
+  closeOpenClawAgentDatabasesForTest();
   closeOpenClawStateDatabaseForTest();
   vi.unstubAllEnvs();
   if (tmpDir) {
@@ -34,6 +37,10 @@ function makeAssistant(text: string, timestamp: number) {
     content: [{ type: "text", text }],
     timestamp,
   });
+}
+
+async function loadState(sessionFile: string) {
+  return await readTranscriptState(sessionFile);
 }
 
 function createCompactedSession(sessionDir: string): {
@@ -75,7 +82,7 @@ describe("rotateTranscriptAfterCompaction", () => {
     expect(result.rotated).toBe(true);
     expect(result.sessionFile).toBeTruthy();
 
-    const successor = SessionManager.open(result.sessionFile!);
+    const successor = await loadState(result.sessionFile!);
     expect(successor.getHeader()).toMatchObject({
       parentSession: sessionFile,
       cwd: dir,
@@ -99,9 +106,9 @@ describe("rotateTranscriptAfterCompaction", () => {
     expect(result.sessionId).toBeTruthy();
     expect(result.sessionFile).toBeTruthy();
     expect(result.sessionFile).not.toBe(sessionFile);
-    expect(SessionManager.open(sessionFile).getEntries()).toEqual(originalEntries);
+    expect((await loadState(sessionFile)).getEntries()).toEqual(originalEntries);
 
-    const successor = SessionManager.open(result.sessionFile!);
+    const successor = await loadState(result.sessionFile!);
     expect(successor.getHeader()).toMatchObject({
       id: result.sessionId,
       parentSession: sessionFile,
@@ -157,7 +164,7 @@ describe("rotateTranscriptAfterCompaction", () => {
     });
 
     expect(result.rotated).toBe(true);
-    const successor = SessionManager.open(result.sessionFile!);
+    const successor = await loadState(result.sessionFile!);
     const entries = successor.getEntries();
     expect(entries.find((entry) => entry.id === staleModelId)).toBeUndefined();
     expect(entries.find((entry) => entry.id === staleThinkingId)).toBeUndefined();
@@ -207,7 +214,7 @@ describe("rotateTranscriptAfterCompaction", () => {
     });
 
     expect(result.rotated).toBe(true);
-    const successor = SessionManager.open(result.sessionFile!);
+    const successor = await loadState(result.sessionFile!);
     const entries = successor.getEntries();
     expect(entries.find((entry) => entry.id === firstDuplicateId)).toBeDefined();
     expect(entries.find((entry) => entry.id === secondDuplicateId)).toBeUndefined();
@@ -265,7 +272,7 @@ describe("rotateTranscriptAfterCompaction", () => {
     const compactionId = manager.appendCompaction("fresh manual summary", recentTailId, 200);
     const sessionFile = manager.getSessionFile();
     expect(sessionFile).toBeTruthy();
-    const staleManager = SessionManager.open(sessionFile!);
+    const staleManager = await loadState(sessionFile!);
 
     const hardened = await hardenManualCompactionBoundary({ sessionFile: sessionFile! });
     expect(hardened.applied).toBe(true);
@@ -277,13 +284,13 @@ describe("rotateTranscriptAfterCompaction", () => {
     expect(staleLeaf.firstKeptEntryId).toBe(recentTailId);
 
     const result = await rotateTranscriptAfterCompaction({
-      sessionManager: SessionManager.open(sessionFile!),
+      sessionManager: await loadState(sessionFile!),
       sessionFile: sessionFile!,
       now: () => new Date("2026-04-27T12:30:00.000Z"),
     });
 
     expect(result.rotated).toBe(true);
-    const successor = SessionManager.open(result.sessionFile!);
+    const successor = await loadState(result.sessionFile!);
     const successorText = JSON.stringify(successor.buildSessionContext().messages);
     expect(successorText).toContain("fresh manual summary");
     expect(successorText).not.toContain("recent question");
@@ -328,7 +335,7 @@ describe("rotateTranscriptAfterCompaction", () => {
     });
 
     expect(result.rotated).toBe(true);
-    const successor = SessionManager.open(result.sessionFile!);
+    const successor = await loadState(result.sessionFile!);
     const allEntries = successor.getEntries();
     expect(allEntries.find((entry) => entry.id === branchSummaryId)).toMatchObject({
       type: "branch_summary",
@@ -380,7 +387,7 @@ describe("rotateTranscriptAfterCompaction", () => {
     });
 
     expect(result.rotated).toBe(true);
-    const successor = SessionManager.open(result.sessionFile!);
+    const successor = await loadState(result.sessionFile!);
     const entries = successor.getEntries();
     const indexById = new Map(entries.map((entry, index) => [entry.id, index]));
     expect(indexById.get(branchFromId)).toBeLessThan(indexById.get(branchSummaryId)!);
