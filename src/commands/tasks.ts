@@ -1,5 +1,5 @@
 import { getRuntimeConfig } from "../config/config.js";
-import { resolveCronStorePath } from "../cron/store.js";
+import { resolveCronStoreKey } from "../cron/store.js";
 import type { RuntimeEnv } from "../runtime.js";
 import { normalizeOptionalString } from "../shared/string-coerce.js";
 import { getTaskById, updateTaskNotifyPolicyById } from "../tasks/runtime-internal.js";
@@ -53,7 +53,7 @@ async function loadTaskCancelConfig() {
 function configureTaskMaintenanceFromConfig(): void {
   const cfg = getRuntimeConfig();
   configureTaskRegistryMaintenance({
-    cronStorePath: resolveCronStorePath(cfg.cron?.store),
+    cronStorePath: resolveCronStoreKey(cfg.cron?.store),
   });
 }
 
